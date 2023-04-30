@@ -1,0 +1,33 @@
+{
+  "name": "celysium/message-broker",
+  "description": "A message broker based on Kafka queue management.",
+  "autoload": {
+    "psr-4": {
+      "Celysium\\MessageBroker\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Mehdi Alikhani",
+      "email": "mahdi.alikhani855@hotmail.com"
+    }
+  ],
+  "require": {
+    "php": "^8.0.2",
+    "laravel/framework": "^9.0|^10.0",
+    "celysium/response": "^1.0",
+    "celysium/logger": "^1.0"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Celysium\\MessageBroker\\MessageBrokerServiceProvider"
+      ]
+    }
+  },
+  "require-dev": {
+    "orchestra/testbench": "^7.0"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
