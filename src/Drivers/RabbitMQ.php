@@ -13,15 +13,15 @@ class RabbitMQ implements MessageBrokerInterface
     {
         $source = env('MICROSERVICE_SLUG' , 'none');
 
-        $data = compact('source', 'event', 'data');
+        $data = json_encode(compact('source', 'event', 'data'));
 
-        $connection = new AMQPStreamConnection(config('Rabbitmq.host'), config('Rabbitmq.port'), config('Rabbitmq.user'), config('Rabbitmq.password'));
+        $connection = new AMQPStreamConnection(config('message-broker.rabbitmq.host'), config('message-broker.rabbitmq.port'), config('message-broker.rabbitmq.user'), config('message-broker.rabbitmq.password'));
         $channel = $connection->channel();
 
-        $channel->queue_declare(config('Rabbitmq.queue'), false, false, false, false);
+        $channel->queue_declare(config('message-broker.rabbitmq.queue'), false, false, false, false);
 
         $message = new AMQPMessage($data);
-        $channel->basic_publish($message, '', config('Rabbitmq.queue'));
+        $channel->basic_publish($message, '', config('message-broker.rabbitmq.queue'));
 
         $channel->close();
         $connection->close();
@@ -29,17 +29,17 @@ class RabbitMQ implements MessageBrokerInterface
         return true;
     }
 
-    public function consumer()
+    public function listen()
     {
-        $connection = new AMQPStreamConnection(config('Rabbitmq.host'), config('Rabbitmq.port'), config('Rabbitmq.user'), config('Rabbitmq.password'));
+        $connection = new AMQPStreamConnection(config('message-broker.rabbitmq.host'), config('message-broker.rabbitmq.port'), config('message-broker.rabbitmq.user'), config('message-broker.rabbitmq.password'));
         $channel = $connection->channel();
 
-        $channel->queue_declare(config('Rabbitmq.queue'), false, false, false, false);
+        $channel->queue_declare(config('message-broker.rabbitmq.queue'), false, false, false, false);
 
-        $channel->basic_consume(config('Rabbitmq.queue'), '', false, true, false, false, function ($message) {
-            $messageBody = $message->body;
+        $channel->basic_consume(config('message-broker.rabbitmq.queue'), '', false, true, false, false, function ($message) {
+            $messageBody = json_decode($message->body);
 
-            event(new IncomingMessageEvent($messageBody['event'], $messageBody['data'], $messageBody['source']));
+            event(new IncomingMessageEvent($messageBody->event, $messageBody->data, $messageBody->source));
         });
 
         while ($channel->is_open()) {
