@@ -13,7 +13,7 @@ class ConsumerCommand extends Command
 
     public function handle(): void
     {
-        $driver = $this->option('driver') ?? config('MESSAGE_BROKER_DEFAULT_DRIVER');
+        $driver = $this->option('driver') ?: config('MESSAGE_BROKER_DEFAULT_DRIVER');
 
         MessageBroker::driver($driver)->consumer();
     }
