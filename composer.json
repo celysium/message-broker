@@ -1,6 +1,6 @@
 {
   "name": "celysium/message-broker",
-  "description": "A message broker based on Kafka queue management.",
+  "description": "Message broker package with multiple drivers",
   "autoload": {
     "psr-4": {
       "Celysium\\MessageBroker\\": "src/"
