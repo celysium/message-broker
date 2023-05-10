@@ -1,13 +1,13 @@
 <?php
 
 return [
-    'MESSAGE_BROKER_DEFAULT_DRIVER' => env('MESSAGE_BROKER_DEFAULT_DRIVER', 'Kafka'),
-    'Kafka' => [
+    'default' => env('MESSAGE_BROKER_DEFAULT_DRIVER', 'rabbitmq'),
+    'kafka' => [
         'debug' => env('KAFKA_DEBUG', false),
         'topic' => env('KAFKA_TOPIC', ''),
         'consumer' => env('KAFKA_CONSUMER', '')
     ],
-    'Rabbitmq' => [
+    'rabbitmq' => [
         'host' => env('RABBITMQ_HOST', ''),
         'port' => env('RABBITMQ_PORT', 5672),
         'user' => env('RABBITMQ_USER', ''),

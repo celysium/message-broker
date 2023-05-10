@@ -6,5 +6,5 @@ interface MessageBrokerInterface
 {
     public function send(string $event, array $data);
 
-    public function consumer();
+    public function listen();
 }

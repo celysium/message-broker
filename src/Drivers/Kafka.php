@@ -18,14 +18,14 @@ class Kafka implements MessageBrokerInterface
             body: compact('source', 'event', 'data'),
         );
 
-        $producer = KafkaDriver::publishOn(config('Kafka.topic'))
+        $producer = KafkaDriver::publishOn(config('message-broker.kafka.topic'))
             ->withMessasge($message)
-            ->withDebugEnabled(config('Kafka.debug'));
+            ->withDebugEnabled(config('message-broker.kafka.debug'));
 
         return $producer->send();
     }
 
-    public function consumer()
+    public function listen()
     {
         $consumer = KafkaDriver::createConsumer(config('Kafka.consumer'))
             ->withHandler(function(KafkaConsumerMessage $message) {

@@ -5,16 +5,16 @@ namespace Celysium\MessageBroker\Console\Commands;
 use Celysium\MessageBroker\Facades\MessageBroker;
 use Illuminate\Console\Command;
 
-class ConsumerCommand extends Command
+class ListenerCommand extends Command
 {
     protected $signature = 'message-broker:consume {--driver=}';
 
-    protected $description = 'Create message broker consumer';
+    protected $description = 'Create message broker listener';
 
     public function handle(): void
     {
-        $driver = $this->option('driver') ?: config('MESSAGE_BROKER_DEFAULT_DRIVER');
+        $driver = $this->option('driver') ?: config('message-broker.default');
 
-        MessageBroker::driver($driver)->consumer();
+        MessageBroker::driver($driver)->listen();
     }
 }
