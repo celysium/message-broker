@@ -3,27 +3,34 @@
 namespace Celysium\MessageBroker;
 
 use Celysium\MessageBroker\Contracts\MessageBrokerInterface;
-use http\Exception\InvalidArgumentException;
+use Celysium\MessageBroker\Drivers\Kafka;
+use Celysium\MessageBroker\Drivers\RabbitMQ;
+use Illuminate\Contracts\Container\Container;
+use Illuminate\Support\Manager;
 
-class MessageBroker
+class MessageBroker extends Manager
 {
-    public function __construct()
+    public function __construct(Container $container)
     {
-        $this->driver();
+        parent::__construct($container);
     }
 
     /**
-     * @param $name
+     * @param $driver
      * @return MessageBrokerInterface
      */
-    public function driver($name = null): MessageBrokerInterface
+    public function driver($driver = null): MessageBrokerInterface
     {
-        $name = $name ?: config('MESSAGE_BROKER_DEFAULT_DRIVER');
+        $driver = $driver ?: $this->getDefaultDriver();
 
-        if (class_exists($name)) {
-            return new $name();
-        }
+        return match (strtolower($driver)) {
+            'rabbitmq' => new RabbitMQ(),
+            'kafka' => new Kafka()
+        };
+    }
 
-        throw new InvalidArgumentException('Driver not found');
+    public function getDefaultDriver()
+    {
+        return config('message-broker.default');
     }
 }

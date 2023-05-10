@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static MessageBrokerInterface driver(string $name = null)
  * @method static MessageBrokerInterface send(string $event, array $data)
- * @method static MessageBrokerInterface consumer()
+ * @method static MessageBrokerInterface listen()
  */
 class MessageBroker extends Facade
 {
