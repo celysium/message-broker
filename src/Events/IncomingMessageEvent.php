@@ -9,14 +9,8 @@ class IncomingMessageEvent
 {
     use Dispatchable, SerializesModels;
 
-    public mixed $data;
-    public string $event;
-    public string $service;
 
-    public function __construct($event, $data, $service = 'none')
+    public function __construct(public string $event, public array $data, public string $service = 'none')
     {
-        $this->event = $event;
-        $this->service = $service;
-        $this->data = $data;
     }
 }
