@@ -39,7 +39,7 @@ class RabbitMQ implements MessageBrokerInterface
         $channel->basic_consume(config('message-broker.rabbitmq.queue'), '', false, true, false, false, function ($message) {
             $messageBody = json_decode($message->body, true);
 
-            event(new IncomingMessageEvent($messageBody->event, $messageBody->data, $messageBody->source));
+            event(new IncomingMessageEvent($messageBody['event'], $messageBody['data'], $messageBody['source']));
         });
 
         while ($channel->is_open()) {
