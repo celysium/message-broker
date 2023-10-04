@@ -11,7 +11,7 @@ class RabbitMQ implements MessageBrokerInterface
 {
     public function send(string $event, array $data)
     {
-        $source = env('MICROSERVICE_SLUG' , 'none');
+        $source = env('MICROSERVICE_SLUG', 'none');
 
         $data = json_encode(compact('source', 'event', 'data'));
 
@@ -20,7 +20,7 @@ class RabbitMQ implements MessageBrokerInterface
 
         $channel->queue_declare(config('message-broker.rabbitmq.queue'), false, false, false, false);
 
-        $message = new AMQPMessage($data);
+        $message = new AMQPMessage($data, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $channel->basic_publish($message, '', config('message-broker.rabbitmq.queue'));
 
         $channel->close();
