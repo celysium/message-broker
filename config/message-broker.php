@@ -12,10 +12,8 @@ return [
         'port' => env('RABBITMQ_PORT', 5672),
         'user' => env('RABBITMQ_USER', ''),
         'password' => env('RABBITMQ_PASSWORD', ''),
-        'queue' => env('RABBITMQ_QUEUE', ''),
-        'sleep' => env('RABBITMQ_SLEEP', 1),
-        'timeout' => env('RABBITMQ_TIMEOUT', 180),
-        'tries' => env('RABBITMQ_TRIES', 5),
-        'rest' => env('RABBITMQ_REST', 1)
+        'queue' => env('RABBITMQ_QUEUE', 'default'),
+        'exchange' => env('RABBITMQ_EXCHANGE', 'exchange'),
+        'exchange_key' => env('RABBITMQ_KEY', 'key'),
     ]
 ];
