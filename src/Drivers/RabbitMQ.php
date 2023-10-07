@@ -25,7 +25,7 @@ class RabbitMQ implements MessageBrokerInterface
         $connection = new AMQPStreamConnection($host, $port, $user, $password);
 
         $channel = $connection->channel();
-        $channel->exchange_declare(config('message-broker.rabbitmq.exchange'), 'direct', false, false, false);
+        $channel->exchange_declare($exchange, 'fanout', false, true, false);
         $channel->queue_declare($queue, false, true, false, false);
         $channel->queue_bind($queue, $exchange, $key);
         $message = new AMQPMessage($data, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
@@ -41,15 +41,21 @@ class RabbitMQ implements MessageBrokerInterface
         $port = config('message-broker.rabbitmq.port');
         $user = config('message-broker.rabbitmq.user');
         $password = config('message-broker.rabbitmq.password');
+        $exchange = config('message-broker.rabbitmq.exchange');
 
         $connection = new AMQPStreamConnection($host, $port, $user, $password);
 
         $channel = $connection->channel();
+        $channel->exchange_declare($exchange, 'fanout', false, true, false);
         $channel->queue_declare($queue, false, true, false, false);
         $channel->basic_consume($queue, '', false, true, false, false, function ($message) {
+            echo ' [x] Received ', $message->body, "\n";
             $messageBody = json_decode($message->body, true);
             event(new IncomingMessageEvent($messageBody['event'], $messageBody['data'], $messageBody['source']));
         });
+
+        echo "Waiting for new message on $queue", " \n";
+
         while ($channel->is_consuming()) {
             $channel->wait();
         }
