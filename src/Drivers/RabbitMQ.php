@@ -30,6 +30,9 @@ class RabbitMQ implements MessageBrokerInterface
         $channel->queue_bind($queue, $exchange, $key);
         $message = new AMQPMessage($data, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $channel->basic_publish($message, $exchange, $key);
+
+        echo sprintf("[%s] Publish message : %s\n", now(), $message->body);
+
         $channel->close();
         $connection->close();
     }
@@ -42,20 +45,22 @@ class RabbitMQ implements MessageBrokerInterface
         $user = config('message-broker.rabbitmq.user');
         $password = config('message-broker.rabbitmq.password');
         $exchange = config('message-broker.rabbitmq.exchange');
+        $key = config('message-broker.rabbitmq.exchange_key');
+
+        echo sprintf("[%s] consome queue : %s\n", now(), $queue);
 
         $connection = new AMQPStreamConnection($host, $port, $user, $password);
-
         $channel = $connection->channel();
         $channel->exchange_declare($exchange, 'fanout', false, true, false);
         $channel->queue_declare($queue, false, true, false, false);
+        $channel->queue_bind($queue, $exchange, $key);
         $channel->basic_consume($queue, '', false, true, false, false, function ($message) {
-            echo ' [x] Received ', $message->body, "\n";
+            echo sprintf("[%s] Received message : %s\n", now(), $message->body);
             $messageBody = json_decode($message->body, true);
             event(new IncomingMessageEvent($messageBody['event'], $messageBody['data'], $messageBody['source']));
         });
 
-        echo "Waiting for new message on $queue", " \n";
-
+        echo sprintf("[%s] ready for gat new message : %s\n", now(), $queue);
         while ($channel->is_consuming()) {
             $channel->wait();
         }
