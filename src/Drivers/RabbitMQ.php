@@ -30,9 +30,6 @@ class RabbitMQ implements MessageBrokerInterface
         $channel->queue_bind($queue, $exchange, $key);
         $message = new AMQPMessage($data, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $channel->basic_publish($message, $exchange, $key);
-
-        echo sprintf("[%s] Publish message : %s\n", now(), $message->body);
-
         $channel->close();
         $connection->close();
     }
