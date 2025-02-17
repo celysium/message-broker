@@ -1,19 +1,23 @@
 <?php
 
+use PhpAmqpLib\Message\AMQPMessage;
+
 return [
-    'default' => env('MESSAGE_BROKER_DEFAULT_DRIVER', 'rabbitmq'),
-    'kafka' => [
-        'debug' => env('KAFKA_DEBUG', false),
-        'topic' => env('KAFKA_TOPIC', ''),
-        'consumer' => env('KAFKA_CONSUMER', '')
-    ],
+    'default'  => env('MESSAGE_BROKER_DRIVER', 'rabbitmq'),
     'rabbitmq' => [
-        'host' => env('RABBITMQ_HOST', ''),
-        'port' => env('RABBITMQ_PORT', 5672),
-        'user' => env('RABBITMQ_USER', ''),
-        'password' => env('RABBITMQ_PASSWORD', ''),
-        'queue' => env('RABBITMQ_QUEUE', 'default'),
-        'exchange' => env('RABBITMQ_EXCHANGE', 'exchange'),
-        'exchange_key' => env('RABBITMQ_KEY', 'key'),
+        'host'         => env('RABBITMQ_HOST', ''),
+        'port'         => env('RABBITMQ_PORT', 5672),
+        'user'         => env('RABBITMQ_USER', ''),
+        'password'     => env('RABBITMQ_PASSWORD', ''),
+        'vhost'        => env('RABBITMQ_VHOST', '/'),
+        'queue'        => env('RABBITMQ_QUEUE', 'default'),
+        'exchange' => [
+            'name' => env('RABBITMQ_EXCHANGE_NAME', ''),
+            'key'  => env('RABBITMQ_EXCHANGE_KEY', ''),
+            'type' => env('RABBITMQ_EXCHANGE_TYPE', 'direct'),
+        ],
+        'message' => [
+            'delivery_mode' => AMQPMessage::DELIVERY_MODE_NON_PERSISTENT
+        ]
     ]
 ];

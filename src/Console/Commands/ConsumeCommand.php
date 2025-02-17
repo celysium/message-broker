@@ -5,7 +5,7 @@ namespace Celysium\MessageBroker\Console\Commands;
 use Celysium\MessageBroker\Facades\MessageBroker;
 use Illuminate\Console\Command;
 
-class ListenerCommand extends Command
+class ConsumeCommand extends Command
 {
     protected $signature = 'message-broker:consume {--driver=}';
 
@@ -15,6 +15,6 @@ class ListenerCommand extends Command
     {
         $driver = $this->option('driver') ?: config('message-broker.default');
 
-        MessageBroker::driver($driver)->listen();
+        MessageBroker::driver($driver)->consume();
     }
 }

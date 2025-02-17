@@ -2,15 +2,19 @@
 
 namespace Celysium\MessageBroker\Events;
 
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Foundation\Events\Dispatchable;
 
 class IncomingMessageEvent
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
 
+    public string $event;
 
-    public function __construct(public string $event, public array $data, public string $service = 'none')
+    public array $data;
+
+    public function __construct(string $event, array $data)
     {
+        $this->event = $event;
+        $this->data = $data;
     }
 }

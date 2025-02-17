@@ -2,9 +2,9 @@
 
 namespace Celysium\MessageBroker;
 
-use Celysium\MessageBroker\Console\Commands\ListenerCommand;
-use Celysium\MessageBroker\Events\SendMessageEvent;
-use Celysium\MessageBroker\Listeners\SendMessageListener;
+use Celysium\MessageBroker\Console\Commands\ConsumeCommand;
+use Celysium\MessageBroker\Events\PublishMessageEvent;
+use Celysium\MessageBroker\Listeners\PublishMessageListener;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -13,7 +13,7 @@ class MessageBrokerServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        Event::listen(SendMessageEvent::class, SendMessageListener::class);
+        Event::listen(PublishMessageEvent::class, PublishMessageListener::class);
 
         $this->app->bind('message-broker', function ($app) {
             return new MessageBroker($app);
@@ -25,6 +25,6 @@ class MessageBrokerServiceProvider extends ServiceProvider
             __DIR__ . '/../config/message-broker.php' => config_path('message-broker.php'),
         ], 'config');
 
-        $this->commands(ListenerCommand::class);
+        $this->commands(ConsumeCommand::class);
     }
 }

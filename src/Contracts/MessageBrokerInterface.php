@@ -4,7 +4,7 @@ namespace Celysium\MessageBroker\Contracts;
 
 interface MessageBrokerInterface
 {
-    public function send(string $event, array $data): void;
+    public function publish(string $event, array $data, callable $ack = null, callable $nack = null): void;
 
-    public function listen(): void;
+    public function consume(): void;
 }

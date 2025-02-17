@@ -3,8 +3,8 @@
 namespace Celysium\MessageBroker;
 
 use Celysium\MessageBroker\Contracts\MessageBrokerInterface;
-use Celysium\MessageBroker\Drivers\Kafka;
 use Celysium\MessageBroker\Drivers\RabbitMQ;
+use Exception;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Manager;
 
@@ -18,15 +18,18 @@ class MessageBroker extends Manager
     /**
      * @param $driver
      * @return MessageBrokerInterface
+     * @throws Exception
      */
     public function driver($driver = null): MessageBrokerInterface
     {
         $driver = $driver ?: $this->getDefaultDriver();
 
-        return match (strtolower($driver)) {
-            'rabbitmq' => new RabbitMQ(),
-            'kafka' => new Kafka()
-        };
+        switch (strtolower($driver)) {
+            case 'rabbitmq':
+                return new RabbitMQ();
+            default:
+                throw new Exception("driver '$driver' not found");
+        }
     }
 
     public function getDefaultDriver()

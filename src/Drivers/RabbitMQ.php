@@ -4,64 +4,94 @@ namespace Celysium\MessageBroker\Drivers;
 
 use Celysium\MessageBroker\Contracts\MessageBrokerInterface;
 use Celysium\MessageBroker\Events\IncomingMessageEvent;
+use Exception;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitMQ implements MessageBrokerInterface
 {
-    public function send(string $event, array $data): void
+    /**
+     * @param callable $action
+     * @throws Exception
+     */
+    public function exec(callable $action)
     {
-        $source = env('MICROSERVICE_SLUG', 'none');
-        $queue = config('message-broker.rabbitmq.queue');
-        $host = config('message-broker.rabbitmq.host');
-        $port = config('message-broker.rabbitmq.port');
-        $user = config('message-broker.rabbitmq.user');
-        $password = config('message-broker.rabbitmq.password');
-        $exchange = config('message-broker.rabbitmq.exchange');
-        $key = config('message-broker.rabbitmq.exchange_key');
+        $config = (object)config('message-broker.rabbitmq');
 
-        $data = json_encode(compact('source', 'event', 'data'));
+        $connection = new AMQPStreamConnection(
+            $config->host,
+            $config->port,
+            $config->user,
+            $config->password,
+            $config->vhost
+        );
 
-        $connection = new AMQPStreamConnection($host, $port, $user, $password);
-
+        /** @var AMQPChannel $channel */
         $channel = $connection->channel();
-        $channel->exchange_declare($exchange, 'fanout', false, true, false);
-        $channel->queue_declare($queue, false, true, false, false);
-        $channel->queue_bind($queue, $exchange, $key);
-        $message = new AMQPMessage($data, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
-        $channel->basic_publish($message, $exchange, $key);
+        $channel->exchange_declare($config->exchange->name, $config->exchange->type, false, true, false);
+        $channel->queue_declare($config->queue, false, true, false, false);
+        $channel->queue_bind($config->queue, $config->exchange->name, $config->exchange->key);
+
+        $action($config, $channel);
+
         $channel->close();
         $connection->close();
     }
 
-    public function listen(): void
+    /**
+     * @param string $event
+     * @param array $data
+     * @param callable|null $ack
+     * @param callable|null $nack
+     * @return void
+     * @throws Exception
+     */
+    public function publish(string $event, array $data, callable $ack = null, callable $nack = null): void
     {
-        $queue = config('message-broker.rabbitmq.queue');
-        $host = config('message-broker.rabbitmq.host');
-        $port = config('message-broker.rabbitmq.port');
-        $user = config('message-broker.rabbitmq.user');
-        $password = config('message-broker.rabbitmq.password');
-        $exchange = config('message-broker.rabbitmq.exchange');
-        $key = config('message-broker.rabbitmq.exchange_key');
+        $this->exec(function ($config, $channel) use ($event, $data, $ack, $nack) {
 
-        echo sprintf("[%s] consome queue : %s\n", now(), $queue);
+            /** @var AMQPChannel $channel */
+            $channel->confirm_select();
+            if ($ack) {
+                $channel->set_ack_handler($ack);
+            }
+            if ($nack) {
+                $channel->set_nack_handler($nack);
+            }
+            $payload = json_encode(compact('event', 'data'));
 
-        $connection = new AMQPStreamConnection($host, $port, $user, $password);
-        $channel = $connection->channel();
-        $channel->exchange_declare($exchange, 'fanout', false, true, false);
-        $channel->queue_declare($queue, false, true, false, false);
-        $channel->queue_bind($queue, $exchange, $key);
-        $channel->basic_consume($queue, '', false, true, false, false, function ($message) {
-            echo sprintf("[%s] Received message : %s\n", now(), $message->body);
-            $messageBody = json_decode($message->body, true);
-            event(new IncomingMessageEvent($messageBody['event'], $messageBody['data'], $messageBody['source']));
+            $message = new AMQPMessage($payload, ['delivery_mode' => $config->message->delivery_mode]);
+            $channel->basic_publish($message, $config->exchange->name, $config->exchange->key);
+
+            $channel->wait_for_pending_acks();
+
         });
+    }
 
-        echo sprintf("[%s] ready for gat new message : %s\n", now(), $queue);
-        while ($channel->is_consuming()) {
-            $channel->wait();
-        }
-        $channel->close();
-        $connection->close();
+    /**
+     * @return void
+     * @throws Exception
+     */
+    public function consume(): void
+    {
+        $this->exec(function ($config, $channel) {
+
+            $callback = function (AMQPMessage $message) {
+                echo sprintf("[%s] Received message : %s\n", now(), $message->getBody());
+
+                $messageBody = json_decode($message->getBody(), true);
+                event(new IncomingMessageEvent($messageBody['event'], $messageBody['data']));
+                $message->ack();
+            };
+
+            /** @var AMQPChannel $channel */
+            $channel->basic_consume($config->queue, '', false, false, false, false, $callback);
+
+            echo sprintf("[%s] ready for gat new message : %s\n", now(), $config->queue);
+            while ($channel->is_consuming()) {
+                $channel->wait();
+            }
+        });
     }
 }
