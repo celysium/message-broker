@@ -2,19 +2,19 @@
 
 namespace Celysium\MessageBroker\Events;
 
+use Celysium\MessageBroker\Message;
 use Illuminate\Foundation\Events\Dispatchable;
 
 class IncomingMessageEvent
 {
     use Dispatchable;
 
-    public string $event;
+    public Message $message;
 
     public array $data;
 
-    public function __construct(string $event, array $data)
+    public function __construct(Message $message)
     {
-        $this->event = $event;
-        $this->data = $data;
+        $this->message = $message;
     }
 }

@@ -2,9 +2,11 @@
 
 namespace Celysium\MessageBroker\Contracts;
 
+use Celysium\MessageBroker\Message;
+
 interface MessageBrokerInterface
 {
-    public function publish(string $event, array $data, callable $ack = null, callable $nack = null): void;
+    public function publish(Message $message, callable $ack = null, callable $nack = null): void;
 
     public function consume(): void;
 }

@@ -1,5 +1,6 @@
 <?php
 
+use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Message\AMQPMessage;
 
 return [
@@ -14,7 +15,7 @@ return [
         'exchange' => [
             'name' => env('RABBITMQ_EXCHANGE_NAME', ''),
             'key'  => env('RABBITMQ_EXCHANGE_KEY', ''),
-            'type' => env('RABBITMQ_EXCHANGE_TYPE', 'direct'),
+            'type' => env('RABBITMQ_EXCHANGE_TYPE', AMQPExchangeType::DIRECT),
         ],
         'message' => [
             'delivery_mode' => AMQPMessage::DELIVERY_MODE_NON_PERSISTENT

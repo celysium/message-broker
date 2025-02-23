@@ -9,6 +9,6 @@ class PublishMessageListener
 {
     public function handle(PublishMessageEvent $event): void
     {
-        MessageBroker::driver($event->driver)->publish($event->event, $event->data, $event->ack, $event->nack);
+        MessageBroker::driver($event->driver)->publish($event->message, $event->ack, $event->nack);
     }
 }
