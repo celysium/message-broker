@@ -52,39 +52,10 @@ class RabbitMQ implements MessageBrokerInterface
 
     private function declare()
     {
-        /** @var AMQPChannel $channel */
         $this->channel = $this->connection->channel();
         $this->channel->exchange_declare($this->config->exchange->name, $this->config->exchange->type, false, true, false);
         $this->channel->queue_declare($this->config->queue, false, true, false, false);
         $this->channel->queue_bind($this->config->queue, $this->config->exchange->name, $this->config->exchange->key);
-    }
-
-    /**
-     * @param callable $action
-     * @throws Exception
-     */
-    public function exec(callable $action)
-    {
-        $config = (object)config('message-broker.rabbitmq');
-
-        $connection = new AMQPStreamConnection(
-            $config->host,
-            $config->port,
-            $config->user,
-            $config->password,
-            $config->vhost
-        );
-
-        /** @var AMQPChannel $channel */
-        $channel = $connection->channel();
-        $channel->exchange_declare($config->exchange->name, $config->exchange->type, false, true, false);
-        $channel->queue_declare($config->queue, false, true, false, false);
-        $channel->queue_bind($config->queue, $config->exchange->name, $config->exchange->key);
-
-        $action($config, $channel);
-
-        $channel->close();
-        $connection->close();
     }
 
     /**
@@ -124,12 +95,11 @@ class RabbitMQ implements MessageBrokerInterface
             $message->ack();
         };
 
-        /** @var AMQPChannel $channel */
-        $channel->basic_consume($this->config->queue, '', false, false, false, false, $callback);
+        $this->channel->basic_consume($this->config->queue, '', false, false, false, false, $callback);
 
         echo sprintf("[%s] ready for gat new message : %s\n", now(), $this->config->queue);
-        while ($channel->is_consuming()) {
-            $channel->wait();
+        while ($this->channel->is_consuming()) {
+            $this->channel->wait();
         }
     }
 
