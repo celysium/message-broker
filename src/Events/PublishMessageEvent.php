@@ -12,14 +12,14 @@ class PublishMessageEvent
     public Message $message;
     public $ack = null;
     public $nack = null;
-    public string $driver;
+    public ?string $driver;
 
-    public function __construct(Message $message, $ack = null, $nack = null, string $driver = null)
+    public function __construct(Message $message, $ack = null, $nack = null, ?string $driver = null)
     {
-        $this->message      = $message;
-        $this->ack        = $ack;
-        $this->nack       = $nack;
-        $this->driver     = $driver;
+        $this->message = $message;
+        $this->ack     = $ack;
+        $this->nack    = $nack;
+        $this->driver  = $driver;
     }
 
     public function ack(callable $callback): PublishMessageEvent
