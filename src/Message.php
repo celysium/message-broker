@@ -7,7 +7,6 @@ class Message
 {
     private string $event;
     private array $data;
-    private string $body;
     private string $receiver;
     public function __construct(string $event, array $data, string $receiver = null)
     {
@@ -18,17 +17,12 @@ class Message
 
     public static function make(string $event, array $data, string $receiver = null): Message
     {
-        $message = new self($event, $data, $receiver);
-        $message->body = json_encode(compact('event', 'data'));
-        return $message;
+        return new self($event, $data, $receiver);
     }
 
-    public static function resolve(string $body): Message
+    public static function resolve(string $event, string $body): Message
     {
-        $message = json_decode($body, true);
-        $message = new self($message['event'], $message['data']);
-        $message->body = $body;
-        return $message;
+        return new self($event, json_decode($body, true));
     }
 
     public function getEvent(): string
@@ -43,7 +37,7 @@ class Message
 
     public function getBody(): string
     {
-        return $this->body;
+        return json_encode($this->data);
     }
 
     public function getReceiver(): string

@@ -30,7 +30,7 @@ class RabbitMQ implements MessageBrokerInterface
 
     public function setConfig(array $config = [])
     {
-        $this->config = (object)array_merge(config('message-broker.rabbitmq'), $config);
+        $this->config = json_decode(json_encode(array_merge(config('message-broker.rabbitmq'), $config)));
     }
 
     private function connect()
@@ -76,8 +76,8 @@ class RabbitMQ implements MessageBrokerInterface
             $this->channel->set_nack_handler($nack);
         }
 
-        $msg = new AMQPMessage($message->getBody(), ['delivery_mode' => $this->config->message->delivery_mode]);
-        $this->channel->basic_publish($msg, $this->config->exchange->name, $message->getReceiver() ?? $this->config->queue);
+        $msg = new AMQPMessage($message->getBody(), ['delivery_mode' => $this->config->message->delivery_mode, 'headers' => ['event' => $message->getEvent()]]);
+        $this->channel->basic_publish($msg, $this->config->exchange->name, $message->getReceiver());
 
         $this->channel->wait_for_pending_acks();
     }
@@ -91,7 +91,8 @@ class RabbitMQ implements MessageBrokerInterface
         $callback = function (AMQPMessage $message) {
             echo sprintf("[%s] Received message : %s\n", now(), $message->getBody());
 
-            event(new IncomingMessageEvent(Message::resolve($message->getBody())));
+            $headers = $message->get('headers')->getNativeData();
+            event(new IncomingMessageEvent(Message::resolve($headers['event'] ?? '', $message->getBody())));
             $message->ack();
         };
 
@@ -122,8 +123,8 @@ class RabbitMQ implements MessageBrokerInterface
         }
 
         foreach ($messages as $message) {
-            $msg = new AMQPMessage($message->getBody());
-            $this->channel->batch_basic_publish($msg, $this->config->exchange->name, $message->getReceiver() ?? $this->config->queue);
+            $msg = new AMQPMessage($message->getData(), ['delivery_mode' => $this->config->message->delivery_mode, 'headers' => ['event' => $message->getEvent()]]);
+            $this->channel->batch_basic_publish($msg, $this->config->exchange->name, $message->getReceiver());
         }
         $this->channel->publish_batch();
 
@@ -131,7 +132,7 @@ class RabbitMQ implements MessageBrokerInterface
     }
 
     /**
-     * @param array $messages
+     * @param Message[] $messages
      * @return void
      * @throws Exception
      */
@@ -140,8 +141,8 @@ class RabbitMQ implements MessageBrokerInterface
         $this->channel->tx_select();
 
         foreach ($messages as $message) {
-            $msg = new AMQPMessage($message->getBody(), ['delivery_mode' => $this->config->message->delivery_mode]);
-            $this->channel->basic_publish($msg, $this->config->exchange->name, $message->getReceiver() ?? $this->config->queue);
+            $message = new AMQPMessage($message->getData(), ['delivery_mode' => $this->config->message->delivery_mode, 'headers' => ['event' => $message->getEvent()]]);
+            $this->channel->batch_basic_publish($message, $this->config->exchange->name, $message->getReceiver());
         }
 
         $this->channel->tx_commit();
